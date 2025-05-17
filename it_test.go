@@ -94,3 +94,103 @@ func TestMap(t *testing.T) {
 		t.Fatalf("mismatch (-got, +want):\n%v", d)
 	}
 }
+
+func TestTake(t *testing.T) {
+	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	for _, c := range []struct {
+		n    int
+		want []int
+	}{{
+		n:    1,
+		want: []int{1},
+	}, {
+		n:    3,
+		want: []int{1, 2, 3},
+	}, {
+		n:    len(values),
+		want: values,
+	}, {
+		n:    len(values) + 1,
+		want: values,
+	}, {
+		n:    len(values) + 2,
+		want: values,
+	}, {
+		n:    0,
+		want: nil,
+	}, {
+		n:    -1,
+		want: nil,
+	}} {
+		t.Run(strconv.Itoa(c.n), func(t *testing.T) {
+			got := slices.Collect(Take(slices.Values(values), c.n))
+			if d := cmp.Diff(got, c.want); d != "" {
+				t.Fatalf("unexpected result (-got, +want):\n%v", d)
+			}
+		})
+	}
+}
+
+func TestTakeWhile(t *testing.T) {
+	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	for _, c := range []struct {
+		name string
+		p    func(int) bool
+		want []int
+	}{{
+		name: "all",
+		p:    func(int) bool { return true },
+		want: values,
+	}, {
+		name: "<4",
+		p:    func(i int) bool { return i < 4 },
+		want: []int{1, 2, 3},
+	}, {
+		name: ">4",
+		p:    func(i int) bool { return i > 4 },
+		want: nil,
+	}, {
+		name: "odd",
+		p:    func(i int) bool { return i%2 == 1 },
+		want: []int{1},
+	}} {
+		t.Run(c.name, func(t *testing.T) {
+			got := slices.Collect(TakeWhile(slices.Values(values), c.p))
+			if d := cmp.Diff(got, c.want); d != "" {
+				t.Fatalf("unexpected result (-got, +want):\n%v", d)
+			}
+		})
+	}
+}
+
+func TestFilter(t *testing.T) {
+	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	for _, c := range []struct {
+		name string
+		p    func(int) bool
+		want []int
+	}{{
+		name: "all",
+		p:    func(int) bool { return true },
+		want: values,
+	}, {
+		name: "<4",
+		p:    func(i int) bool { return i < 4 },
+		want: []int{1, 2, 3},
+	}, {
+		name: ">4",
+		p:    func(i int) bool { return i > 4 },
+		want: []int{5, 6, 7, 8, 9, 10},
+	}, {
+		name: "odd",
+		p:    func(i int) bool { return i%2 == 1 },
+		want: []int{1, 3, 5, 7, 9},
+	}} {
+		t.Run(c.name, func(t *testing.T) {
+			got := slices.Collect(Filter(slices.Values(values), c.p))
+			if d := cmp.Diff(got, c.want); d != "" {
+				t.Fatalf("unexpected result (-got, +want):\n%v", d)
+			}
+		})
+	}
+}

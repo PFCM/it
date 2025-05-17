@@ -56,3 +56,61 @@ func Map[A, B any](as iter.Seq[A], f func(A) B) iter.Seq[B] {
 		}
 	}
 }
+
+// Const returns an iterator that continually yields the provided value,
+// forever. Note that this is an infinite iterator, intended to be used with
+// something like Zip or Take that will stop early.
+func Const[A any](a A) iter.Seq[A] {
+	return func(yield func(A) bool) {
+		for yield(a) {
+		}
+	}
+}
+
+// Take returns an iterator that yields at most the first n elements of the
+// provided iterator and then stops.
+func Take[A any](it iter.Seq[A], n int) iter.Seq[A] {
+	return func(yield func(A) bool) {
+		i := 0
+		for a := range it {
+			if i >= n {
+				return
+			}
+			if !yield(a) {
+				return
+			}
+			i++
+		}
+	}
+}
+
+// TakeWhile returns an iterator that yields the (possibly empty) prefix of the
+// provided iterator for which the given predicate returns true. The returned
+// iterator finishes as soon as it yields a value for which p returns false.
+func TakeWhile[A any](it iter.Seq[A], p func(A) bool) iter.Seq[A] {
+	return func(yield func(A) bool) {
+		for a := range it {
+			if !p(a) {
+				return
+			}
+			if !yield(a) {
+				return
+			}
+		}
+	}
+}
+
+// Filter returns an iterator which yields only those values in it for which p
+// returns true.
+func Filter[A any](it iter.Seq[A], p func(A) bool) iter.Seq[A] {
+	return func(yield func(A) bool) {
+		for a := range it {
+			if !p(a) {
+				continue
+			}
+			if !yield(a) {
+				return
+			}
+		}
+	}
+}
