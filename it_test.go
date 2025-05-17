@@ -83,3 +83,14 @@ func TestChain(t *testing.T) {
 		})
 	}
 }
+
+func TestMap(t *testing.T) {
+	in := []int{1, 2, 3, 4, 5, 6}
+	out := []string{"1", "2", "3", "4", "5", "6"}
+
+	got := slices.Collect(Map(slices.Values(in), strconv.Itoa))
+
+	if d := cmp.Diff(got, out); d != "" {
+		t.Fatalf("mismatch (-got, +want):\n%v", d)
+	}
+}

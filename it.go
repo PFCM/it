@@ -45,3 +45,14 @@ func Concat[A any](its iter.Seq[iter.Seq[A]]) iter.Seq[A] {
 		}
 	}
 }
+
+// Map applies a function to every item in the iterator.
+func Map[A, B any](as iter.Seq[A], f func(A) B) iter.Seq[B] {
+	return func(yield func(B) bool) {
+		for a := range as {
+			if !yield(f(a)) {
+				return
+			}
+		}
+	}
+}
