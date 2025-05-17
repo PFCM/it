@@ -57,6 +57,42 @@ func Map[A, B any](as iter.Seq[A], f func(A) B) iter.Seq[B] {
 	}
 }
 
+// Map1x2 maps an iter.Seq to an iter.Seq2 by applying the provided function to
+// each item in turn.
+func Map1x2[A, B, C any](as iter.Seq[A], f func(A) (B, C)) iter.Seq2[B, C] {
+	return func(yield func(B, C) bool) {
+		for a := range as {
+			if !yield(f(a)) {
+				return
+			}
+		}
+	}
+}
+
+// Map2x1 maps an iter.Seq2 to an iter.Seq by applying the provided function to
+// each pair of items in turn.
+func Map2x1[A, B, C any](abs iter.Seq2[A, B], f func(A, B) C) iter.Seq[C] {
+	return func(yield func(C) bool) {
+		for a, b := range abs {
+			if !yield(f(a, b)) {
+				return
+			}
+		}
+	}
+}
+
+// Map2x2 maps an iter.Seq2 to an iter.Seq2 by applying the provided function to
+// each pair of items in turn.
+func Map2x2[A, B, C, D any](abs iter.Seq2[A, B], f func(A, B) (C, D)) iter.Seq2[C, D] {
+	return func(yield func(C, D) bool) {
+		for a, b := range abs {
+			if !yield(f(a, b)) {
+				return
+			}
+		}
+	}
+}
+
 // Const returns an iterator that continually yields the provided value,
 // forever. Note that this is an infinite iterator, intended to be used with
 // something like Zip or Take that will stop early.
