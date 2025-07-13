@@ -95,6 +95,66 @@ func TestMap(t *testing.T) {
 	}
 }
 
+func TestMap1x2(t *testing.T) {
+	in := []int{1, 2, 3, 4, 5, 6}
+	out := []Pair[int, string]{
+		{2, "1"},
+		{4, "2"},
+		{6, "3"},
+		{8, "4"},
+		{10, "5"},
+		{12, "6"},
+	}
+
+	got := Collect2(Map1x2(slices.Values(in), func(x int) (int, string) {
+		return x * 2, strconv.Itoa(x)
+	}))
+	if d := cmp.Diff(got, out); d != "" {
+		t.Fatalf("mismatch (-got, +want):\n%v", d)
+	}
+}
+
+func TestMap2x1(t *testing.T) {
+	const n = 10
+	in := func(yield func(int, string) bool) {
+		for i := range n {
+			if !yield(i, strconv.Itoa(i)) {
+				return
+			}
+		}
+	}
+	want := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+
+	got := slices.Collect(Map2x1(in, func(i int, _ string) int { return i }))
+	if d := cmp.Diff(got, want); d != "" {
+		t.Fatalf("mismatch (-got, +want):\n%v", d)
+	}
+}
+
+func TestMap2x2(t *testing.T) {
+	in := Unpair(slices.Values([]Pair[int, string]{
+		{1, "1"},
+		{2, "2"},
+		{3, "3"},
+		{4, "4"},
+		{5, "5"},
+	}))
+	want := []Pair[string, int]{
+		{"1", 1},
+		{"2", 2},
+		{"3", 3},
+		{"4", 4},
+		{"5", 5},
+	}
+
+	got := Collect2(Map2x2(in, func(i int, s string) (string, int) {
+		return s, i
+	}))
+	if d := cmp.Diff(got, want); d != "" {
+		t.Fatalf("mismatch (-got, +want):\n%v", d)
+	}
+}
+
 func TestTake(t *testing.T) {
 	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 	for _, c := range []struct {

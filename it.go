@@ -150,3 +150,29 @@ func Filter[A any](it iter.Seq[A], p func(A) bool) iter.Seq[A] {
 		}
 	}
 }
+
+// Pair is just a pair of two elements, for occasions where we need to do things
+// like collect the values in an iter.Seq2.
+type Pair[A, B any] struct {
+	A A
+	B B
+}
+
+// NewPair creates a new pair. It is useful to have this defined as a function,
+// such as when implementing Collect2.
+func NewPair[A, B any](a A, b B) Pair[A, B] { return Pair[A, B]{A: a, B: b} }
+
+// Values returns the values of the pair.
+func (p Pair[A, B]) Values() (A, B) { return p.A, p.B }
+
+// Collect2 is like slices.Collect, but works with iter.Seq2, returning all of
+// the results as Pairs.
+func Collect2[A, B any](i iter.Seq2[A, B]) []Pair[A, B] {
+	return slices.Collect(Map2x1(i, NewPair))
+}
+
+// Unpair is a convenience for turning an iter.Seq[Pair[A, B]] into an
+// iter.Seq2[A, B].
+func Unpair[A, B any](i iter.Seq[Pair[A, B]]) iter.Seq2[A, B] {
+	return Map1x2(i, Pair[A, B].Values)
+}
