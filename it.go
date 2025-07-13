@@ -26,6 +26,20 @@ func Zip[A, B any](as iter.Seq[A], bs iter.Seq[B]) iter.Seq2[A, B] {
 	}
 }
 
+// Enumerate returns an iterator that pairs each element in the provided
+// sequence with its index in the sequence, starting from 0.
+func Enumerate[A any](it iter.Seq[A]) iter.Seq2[int, A] {
+	return func(yield func(int, A) bool) {
+		j := 0
+		for i := range it {
+			if !yield(j, i) {
+				return
+			}
+			j++
+		}
+	}
+}
+
 // Chain takes a number of iterators and returns a single iterator that yields
 // of the values from all of the iterators in sequence, starting with the first
 // argument, then the second and so on.
@@ -41,6 +55,49 @@ func Concat[A any](its iter.Seq[iter.Seq[A]]) iter.Seq[A] {
 				if !yield(a) {
 					return
 				}
+			}
+		}
+	}
+}
+
+// Batch returns an iterator that yields batches of n consecutive values from
+// the provided iterator. The last batch may be smaller. The yielded slice is
+// only valid until the next value is yields (it is reused between batches).
+func Batch[A any](i iter.Seq[A], n int) iter.Seq[[]A] {
+	return func(yield func([]A) bool) {
+		if n == 0 {
+			return
+		}
+		batch := make([]A, 0, n)
+		for a := range i {
+			batch = append(batch, a)
+			if len(batch) == n {
+				if !yield(batch) {
+					return
+				}
+				batch = batch[:0]
+			}
+		}
+		if len(batch) > 0 {
+			yield(batch)
+		}
+	}
+}
+
+// Limit returns a new iterator that yields the first n values from the provided
+// iterator and then stops. If the parent iterator has fewer than n values, the
+// returned child iterator will just stop when it runs out.
+func Limit[A any](i iter.Seq[A], n int) iter.Seq[A] {
+	return func(yield func(A) bool) {
+		if n == 0 {
+			return
+		}
+		for i, a := range Enumerate(i) {
+			if !yield(a) {
+				return
+			}
+			if i == n-1 {
+				return
 			}
 		}
 	}

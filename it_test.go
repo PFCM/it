@@ -84,6 +84,66 @@ func TestChain(t *testing.T) {
 	}
 }
 
+func TestBatch(t *testing.T) {
+	in := []int{1, 2, 3, 4, 5}
+	for _, c := range []struct {
+		n    int
+		want [][]int
+	}{{
+		n:    0,
+		want: nil,
+	}, {
+		n:    1,
+		want: [][]int{{1}, {2}, {3}, {4}, {5}},
+	}, {
+		n:    2,
+		want: [][]int{{1, 2}, {3, 4}, {5}},
+	}, {
+		n:    3,
+		want: [][]int{{1, 2, 3}, {4, 5}},
+	}, {
+		n:    4,
+		want: [][]int{{1, 2, 3, 4}, {5}},
+	}, {
+		n:    5,
+		want: [][]int{{1, 2, 3, 4, 5}},
+	}, {
+		n:    6,
+		want: [][]int{{1, 2, 3, 4, 5}},
+	}} {
+		t.Run(strconv.Itoa(c.n), func(t *testing.T) {
+			// Don't just use slices.Collect, Batch might re-use the
+			// slices.
+			var got [][]int
+			for b := range Batch(slices.Values(in), c.n) {
+				got = append(got, slices.Clone(b))
+			}
+
+			if d := cmp.Diff(got, c.want); d != "" {
+				t.Fatalf("mismatch (-got, +want):\n%v", d)
+			}
+		})
+	}
+}
+
+func TestLimit(t *testing.T) {
+	data := []int{1, 2, 3, 4, 5, 6}
+	for i := range len(data) + 2 {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			got := slices.Collect(Limit(slices.Values(data), i))
+			want := data[:min(len(data), i)]
+
+			if len(got) == 0 {
+				got = []int{}
+			}
+
+			if d := cmp.Diff(got, want); d != "" {
+				t.Fatalf("mismatch (-got, +want):\n%v", d)
+			}
+		})
+	}
+}
+
 func TestMap(t *testing.T) {
 	in := []int{1, 2, 3, 4, 5, 6}
 	out := []string{"1", "2", "3", "4", "5", "6"}
